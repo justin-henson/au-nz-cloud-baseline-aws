@@ -17,3 +17,7 @@ output "availability_zones" {
   value       = local.azs
   description = "AZs used"
 }
+output "app_instance_id" {
+  value       = aws_instance.app.id
+  description = "App instance ID (SSM-managed)"
+}

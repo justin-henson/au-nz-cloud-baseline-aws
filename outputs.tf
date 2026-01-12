@@ -21,3 +21,7 @@ output "app_instance_id" {
   value       = aws_instance.app.id
   description = "App instance ID (SSM-managed)"
 }
+output "alb_dns_name" {
+  value       = aws_lb.app.dns_name
+  description = "Public DNS name for the application load balancer"
+}

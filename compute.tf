@@ -63,6 +63,44 @@ resource "aws_instance" "app" {
   vpc_security_group_ids = [aws_security_group.app.id]
   iam_instance_profile   = aws_iam_instance_profile.ec2_ssm.name
 
+  user_data_replace_on_change = true
+  user_data                   = <<-EOF
+#!/bin/bash
+set -euo pipefail
+
+mkdir -p /home/ec2-user/nz-demo
+cat > /home/ec2-user/nz-demo/index.html <<'HTML'
+<html>
+  <head><title>NZ Cloud Baseline</title></head>
+  <body>
+    <h1>NZ Cloud Baseline</h1>
+    <p>Private EC2 behind ALB, managed via SSM (no SSH, no NAT).</p>
+  </body>
+</html>
+HTML
+chown -R ec2-user:ec2-user /home/ec2-user/nz-demo
+
+cat > /etc/systemd/system/nz-demo.service <<'UNIT'
+[Unit]
+Description=NZ Cloud Baseline demo web server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ec2-user
+WorkingDirectory=/home/ec2-user/nz-demo
+ExecStart=/usr/bin/python3 -m http.server 8080 --bind 0.0.0.0
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now nz-demo
+EOF
+
   metadata_options {
     http_tokens = "required"
   }
@@ -72,3 +110,4 @@ resource "aws_instance" "app" {
     Role = "app"
   }
 }
+
